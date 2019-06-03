@@ -1,0 +1,44 @@
+# NOTE(Jake): 2018-07-25
+#
+#
+# For a less stale example of a SilverStripe 4 .travis.yml file, I suggest seeing
+# what UserForms is doing:
+# - https://github.com/silverstripe/silverstripe-userforms/blob/master/.travis.yml
+#
+
+# Additional SilverStripe 3.X info
+# See: https://github.com/silverstripe-labs/silverstripe-travis-support for setup details and example of testing OPTIONAL modules
+
+language: php
+
+php:
+  - 7.1
+
+env:
+  matrix:
+    - DB=MYSQL CORE_RELEASE=4
+
+matrix:
+  include:
+    - php: 7.1
+      env:
+        - RECIPE_VERSION=4.2.x-dev
+        - DB=MYSQL
+        - PDO=1
+    - php: 7.2
+      env:
+        - RECIPE_VERSION=4.x-dev
+        - DB=MYSQL
+        - PDO=1
+
+before_script:
+  - phpenv rehash
+  - phpenv config-rm xdebug.ini
+  - composer validate
+  - composer require --no-update silverstripe/recipe-cms:$RECIPE_VERSION
+  - if [[ $DB == PGSQL ]]; then composer require --no-update silverstripe/postgresql:2.0.x-dev; fi
+  - composer install --prefer-dist --no-interaction --no-progress --no-suggest --optimize-autoloader --verbose --profile
+
+script:
+  - if [[ $PHPCS_TEST ]]; then vendor/bin/phpcs src/ tests/ -n; fi
+  - vendor/bin/phpunit
